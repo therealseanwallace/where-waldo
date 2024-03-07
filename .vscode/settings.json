@@ -1,0 +1,6 @@
+{
+  "eslint.workingDirectories": [
+    "./apps/web/"
+  ],
+  "eslint.codeActionsOnSave.rules": null
+}
