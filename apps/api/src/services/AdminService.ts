@@ -20,10 +20,7 @@ class AdminService {
     return AdminService.instance;
   }
 
-  public async getGames() {
-    console.log("Getting games from the database...");
-    await this.dbService.getGames();
-  }
+  
 }
 
 export default AdminService;

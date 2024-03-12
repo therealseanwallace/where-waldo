@@ -1,13 +1,13 @@
 import { Request, Response } from 'express';
-import AdminService from '../services/AdminService';
+import GameService from '../services/GameService';
 
 class GameController {
   private static instance: GameController;
 
-  private adminService: AdminService;
+  private gameService: GameService;
 
   private constructor() {
-    this.adminService = AdminService.getInstance();
+    this.gameService = GameService.getInstance();
   }
 
   public static getInstance(): GameController {
@@ -19,7 +19,7 @@ class GameController {
 
   public getGames = async (req: Request, res: Response): Promise<void> => {
     console.log("GameController.getGames() called...");
-    await this.adminService.getGames();
+    await this.gameService.getGames();
     res.send("Games retrieved from the database.");
   }
 }
