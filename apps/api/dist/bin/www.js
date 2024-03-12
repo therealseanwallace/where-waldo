@@ -8,7 +8,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * Module dependencies.
  */
 const http_1 = __importDefault(require("http"));
-const app_js_1 = require("../app.js");
+const app_1 = require("../app");
 /**
  * Normalize a port into a number, string, or false.
  */
@@ -28,11 +28,11 @@ const normalizePort = (val) => {
  * Get port from environment and store in Express.
  */
 const port = normalizePort(process.env.PORT || '3001');
-app_js_1.app.set('port', port);
+app_1.app.set('port', port);
 /**
  * Create HTTP server.
  */
-const server = http_1.default.createServer(app_js_1.app);
+const server = http_1.default.createServer(app_1.app);
 /**
  * Event listener for HTTP server "listening" event.
  */
@@ -71,4 +71,3 @@ const onError = (error) => {
 server.listen(port);
 server.on('error', onError);
 server.on('listening', onListening);
-console.log("Server listening...");

@@ -9,6 +9,7 @@ import cors from "cors";
 import helmet from "helmet";
 import { body } from "express-validator";
 import CustomError from "./utils/CustomError";
+import adminRouter from "./routes/gameRouter";
 
 dotenv.config();
 
@@ -63,7 +64,7 @@ const serverReadyPromise = new Promise<void>((resolve) => {
   serverReadyResolve = resolve;
 });
 
-const startServer = async () => {
+async function startServer() {
   try {
     // Wait for Sequelize connection
   // await DBService.sequelizeInstance.authenticate();
@@ -94,6 +95,8 @@ const startServer = async () => {
   app.get("/", (req, res) => {
     res.send("Welcome to Express");
   });
+
+  app.use("/admin", adminRouter);
 
   app.use((err: Error | CustomError, req: Request, res: Response, next: NextFunction): void => {
     // Log the error details
