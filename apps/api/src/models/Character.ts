@@ -58,3 +58,17 @@ class Character extends Model {
 }
 
 export default Character;
+
+export interface CharacterAttributes {
+  id: number;
+  gameSlug: number;
+  name: string;
+  thumbnailPath: string;
+  thumbnailHeight: number;
+  thumbnailWidth: number;
+  rectStartX: number;
+  rectStartY: number;
+  rectEndX: number;
+  rectEndY: number;
+}
+
