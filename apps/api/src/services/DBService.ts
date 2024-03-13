@@ -1,6 +1,6 @@
 import { Model, ModelStatic, WhereOptions } from "sequelize";
 import SequelizeInstance from "../db/SequelizeInstance";
-
+import Character from "models/Character";
 
 class DBService {
   private static instance: DBService;
@@ -12,7 +12,7 @@ class DBService {
 
     // Check if the models are initialized
     if (!this.DB.Game || !this.DB.Character || !this.DB.HighScore) {
-      throw new Error('Models are not initialized');
+      throw new Error("Models are not initialized");
     }
   }
 
@@ -22,32 +22,32 @@ class DBService {
       await DBService.instance.init();
     }
     return DBService.instance;
-  };
+  }
 
   public async getGames() {
     try {
       const games = await this.DB!.Game!.findAll();
       console.log(games);
     } catch (error) {
-      console.error('Error in DBService.getGames:', error);
+      console.error("Error in DBService.getGames:", error);
       throw error;
     }
   }
 
-  public async getOneGame(id: number) {
+  public async getOneGame(slug: string): Promise<Model | null> {
     try {
       const game = await this.DB!.Game!.findOne({
         where: {
-          id,
+          slug,
         },
         include: [
           {
             model: this.DB!.Character!,
-            as: 'characters',
+            as: "characters",
           },
           {
             model: this.DB!.HighScore!,
-            as: 'highScores',
+            as: "highScores",
           },
         ],
       });
@@ -56,12 +56,29 @@ class DBService {
 
       return game;
     } catch (error) {
-      console.error('Error in DBService.getOneGame:', error);
+      console.error("Error in DBService.getOneGame:", error);
       throw error;
     }
-  };
+  }
 
-  public static async createOrUpdateModel({
+  public async getOneCharacter(id: number): Promise<Character | null> {
+    try {
+      const character = await this.DB!.Character!.findOne({
+        where: {
+          id,
+        },
+      });
+
+      console.log(character);
+
+      return character;
+    } catch (error) {
+      console.error("Error in DBService.getOneCharacter:", error);
+      throw error;
+    }
+  }
+
+  public async createOrUpdateModel({
     model,
     data,
     updateCondition = null,
@@ -70,14 +87,14 @@ class DBService {
     data: object;
     updateCondition?: WhereOptions | null;
   }) {
-
-    const instance = await DBService.getInstance();
-    const dbService = instance.DB;
-    const transaction = await dbService!.sequelizeInstance!.transaction();
+    const transaction = await this.DB!.transaction();
 
     try {
       if (updateCondition) {
-        await model.update(data, { where: updateCondition as WhereOptions, transaction });
+        await model.update(data, {
+          where: updateCondition as WhereOptions,
+          transaction,
+        });
         const returnValue = await model.findOne({
           where: updateCondition,
           transaction,

@@ -80,7 +80,7 @@ class SequelizeInstance {
       Game.initialize(this.sequelizeInstance);
       Character.initialize(this.sequelizeInstance);
       HighScore.initialize(this.sequelizeInstance);
-  
+
       this.Game = Game;
       this.Character = Character;
       this.HighScore = HighScore;
@@ -88,8 +88,8 @@ class SequelizeInstance {
       throw new Error("Sequelize instance is not initialized");
     }
   }
-  
-  public async connectWithRetry(maxRetries = 5, initialDelay = 1000): Promise<Sequelize> {
+
+  private async connectWithRetry(maxRetries = 5, initialDelay = 1000): Promise<Sequelize> {
     let attempt = 0;
     let currentDelay = initialDelay;
     const environment = process.env.NODE_ENV || "development";
