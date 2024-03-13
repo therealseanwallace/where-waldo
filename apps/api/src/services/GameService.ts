@@ -1,4 +1,4 @@
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
 import DBService from "./DBService";
 import GameInstance from "../interfaces/GameInstance";
 import Character, { CharacterAttributes } from "../models/Character";
@@ -12,8 +12,24 @@ interface Coordinates {
   y: number;
 }
 
-interface CheckCollissionPayload extends Coordinates {
+interface CheckCollisionPayload extends Coordinates {
   id: number;
+  token: string;
+}
+
+interface HitPayload {
+  rectStartX: number;
+  rectEndX: number;
+  rectStartY: number;
+  rectEndY: number;
+  pointX: number;
+  pointY: number;
+}
+
+interface GameHighScore {
+  name: string;
+  score: number;
+  gameSlug: string;
 }
 
 class GameService {
@@ -33,22 +49,34 @@ class GameService {
     return jwt.sign(payload, secret, { expiresIn: "1h" });
   }
 
-  private static checkInsideRectangle(
-    rectStartX: number,
-    rectEndY: number,
-    rectStartY: number,
-    rectEndX: number,
-    pointX: number,
-    pointY: number
-  ) {
+  private static checkInsideRectangle(payload: HitPayload) {
+    const { rectStartX, rectEndX, rectStartY, rectEndY, pointX, pointY } =
+      payload;
     const minX = Math.min(rectStartX, rectEndX);
     const maxX = Math.max(rectStartX, rectEndX);
     const minY = Math.min(rectStartY, rectEndY);
     const maxY = Math.max(rectStartY, rectEndY);
 
-    return (
-      pointX >= minX && pointX <= maxX && pointY >= minY && pointY <= maxY
-    );
+    return pointX >= minX && pointX <= maxX && pointY >= minY && pointY <= maxY;
+  }
+
+  private static checkHighScores = (
+    score: number,
+    highScores: GameHighScore[]
+  ) => {
+    let isHighScore = true;
+
+    highScores.forEach((highScore) => {
+      if (highScore.score !== null && score > highScore.score) {
+        isHighScore = false;
+      }
+    });
+
+    return isHighScore;
+  };
+
+  private static calculateScore(startTime: number, completionTime: number) {
+    return Math.floor((completionTime - startTime) / 1000);
   }
 
   public static getInstance() {
@@ -111,12 +139,79 @@ class GameService {
     return gameJwt;
   }
 
-  public async checkCollision(payload: CheckCollissionPayload) {
+  public async checkCollision(payload: CheckCollisionPayload) {
+    interface simpleReturnValue {
+      collison: boolean;
+    }
+
+    interface returnValueWithToken extends simpleReturnValue {
+      token: string;
+      isHighScore: boolean;
+      collision: boolean;
+      playerScore: number;
+    }
+
     try {
-      const char = await this.dbService!.getOneCharacter(payload.id) as Character;
+      const char = (await this.dbService!.getOneCharacter(
+        payload.id
+      )) as Character;
 
       const { rectStartX, rectEndX, rectStartY, rectEndY } = char.get();
-    } catch (error) {}
+
+      const isInside = GameService.checkInsideRectangle({
+        rectStartX,
+        rectEndX,
+        rectStartY,
+        rectEndY,
+        pointX: payload.x,
+        pointY: payload.y,
+      });
+
+      if (isInside) {
+        const { token } = payload;
+        const decoded = jwt.verify(
+          token,
+          process.env.GAME_JWT_SECRET!
+        ) as JwtPayload;
+
+        let allFound = true;
+
+        decoded.charsTofind = decoded.charsTofind.map(
+          (character: CharacterForGame) => {
+            if (character.id === payload.id) {
+              return { ...character, found: true };
+            }
+            if (character.found === false) {
+              allFound = false;
+            }
+            return character;
+          }
+        );
+
+        if (allFound === true) {
+          const completionTime = Date.now();
+          decoded.completionTime = completionTime;
+          const playerScore = GameService.calculateScore(
+            decoded.startTime,
+            completionTime
+          );
+          const isHighScore = GameService.checkHighScores(
+            playerScore,
+            decoded.highScores
+          );
+
+          return {
+            collision: true,
+            token: GameService.generateGameJwt(decoded),
+            isHighScore,
+            playerScore,
+          };
+        }
+      }
+    } catch (error) {
+      console.error("Error occurred while checking collision:", error);
+      return { collision: "error" };
+    }
   }
 }
 
