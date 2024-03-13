@@ -34,11 +34,11 @@ class DBService {
     }
   }
 
-  public async getOneGame(id: number) {
+  public async getOneGame(slug: string): Promise<Model | null>{
     try {
       const game = await this.DB!.Game!.findOne({
         where: {
-          id,
+          slug,
         },
         include: [
           {
@@ -61,7 +61,7 @@ class DBService {
     }
   };
 
-  public static async createOrUpdateModel({
+  public async createOrUpdateModel({
     model,
     data,
     updateCondition = null,
@@ -71,9 +71,7 @@ class DBService {
     updateCondition?: WhereOptions | null;
   }) {
 
-    const instance = await DBService.getInstance();
-    const dbService = instance.DB;
-    const transaction = await dbService!.sequelizeInstance!.transaction();
+    const transaction = await this.DB!.transaction();
 
     try {
       if (updateCondition) {

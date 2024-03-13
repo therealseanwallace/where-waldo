@@ -9,11 +9,11 @@ class Character extends Model {
           autoIncrement: true,
           primaryKey: true,
         },
-        gameId: {
+        gameSlug: {
           type: DataTypes.INTEGER,
           references: {
             model: 'game',
-            key: 'id',
+            key: 'slug',
           },
         },
         name: {
