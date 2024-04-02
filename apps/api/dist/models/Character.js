@@ -9,11 +9,11 @@ class Character extends sequelize_1.Model {
                 autoIncrement: true,
                 primaryKey: true,
             },
-            gameId: {
+            gameSlug: {
                 type: sequelize_1.DataTypes.INTEGER,
                 references: {
                     model: 'game',
-                    key: 'id',
+                    key: 'slug',
                 },
             },
             name: {

@@ -13,6 +13,10 @@ dotenv_1.default.config();
 class SequelizeInstance {
     constructor() {
         this.sequelizeInstance = null;
+        this.sequelize = null;
+        this.Game = null;
+        this.Character = null;
+        this.HighScore = null;
         this.databaseUrl = `postgres://${process.env.DATABASE_USERNAME}:${process.env.POSTGRES_ADMIN_PASSWORD}@${process.env.HOSTED_AT}/${process.env.DB_NAME}`;
         if (process.env.NODE_ENV === "production" || process.env.NODE_ENV === "staging") {
             console.log("Running on production deployment; using DATABASE_URL env variable...");
@@ -21,7 +25,20 @@ class SequelizeInstance {
         else {
             console.log("Running in dev environment. Using template literal database URL...");
         }
-        SequelizeInstance.setupAssociations();
+    }
+    async transaction() {
+        return this.sequelizeInstance.transaction();
+    }
+    static async createInstance() {
+        const instance = new SequelizeInstance();
+        await instance.connectWithRetry();
+        return instance;
+    }
+    static async getInstance() {
+        if (!SequelizeInstance.instance) {
+            SequelizeInstance.instance = await SequelizeInstance.createInstance();
+        }
+        return SequelizeInstance.instance;
     }
     static delay(duration) {
         return new Promise((resolve) => {
@@ -46,6 +63,19 @@ class SequelizeInstance {
             as: "game",
         });
     }
+    async initModels() {
+        if (this.sequelizeInstance) {
+            Game_1.default.initialize(this.sequelizeInstance);
+            Character_1.default.initialize(this.sequelizeInstance);
+            HighScore_1.default.initialize(this.sequelizeInstance);
+            this.Game = Game_1.default;
+            this.Character = Character_1.default;
+            this.HighScore = HighScore_1.default;
+        }
+        else {
+            throw new Error("Sequelize instance is not initialized");
+        }
+    }
     async connectWithRetry(maxRetries = 5, initialDelay = 1000) {
         let attempt = 0;
         let currentDelay = initialDelay;
@@ -65,6 +95,8 @@ class SequelizeInstance {
                 });
                 await this.sequelizeInstance.authenticate();
                 console.log("Connection has been established successfully.");
+                await this.initModels();
+                SequelizeInstance.setupAssociations();
                 return this.sequelizeInstance;
             }
             catch (error) {

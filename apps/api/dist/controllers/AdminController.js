@@ -3,21 +3,21 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const AdminService_1 = __importDefault(require("../services/AdminService"));
-class GameController {
+const DBService_1 = __importDefault(require("../services/DBService"));
+class AdminController {
+    async init() {
+        this.dbService = await DBService_1.default.getInstance();
+    }
     constructor() {
-        this.getGames = async (req, res) => {
-            console.log("GameController.getGames() called...");
-            await this.adminService.getGames();
-            res.send("Games retrieved from the database.");
-        };
-        this.adminService = AdminService_1.default.getInstance();
+        this.uploadGame = async (req, res) => { };
+        this.addChars = async (req, res) => { };
+        this.init();
     }
     static getInstance() {
-        if (!GameController.instance) {
-            GameController.instance = new GameController();
+        if (!AdminController.instance) {
+            AdminController.instance = new AdminController();
         }
-        return GameController.instance;
+        return AdminController.instance;
     }
 }
-exports.default = GameController;
+exports.default = AdminController;

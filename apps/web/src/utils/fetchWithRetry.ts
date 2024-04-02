@@ -1,15 +1,31 @@
+import httpErrorHandler from "@/utils/handleHttpErrors";
+
+interface FetchWithRetryProps {
+  url: string;
+  options: Object;
+  retryCount: number | undefined;
+  handleHttpErrors: Function;
+  setErrors: Function | undefined;
+  delay: number | undefined;
+}
+
+interface FetchData extends Partial<Response> {
+  ok?: boolean;
+}
+
 async function fetchWithRetry({
   url,
   options,
   retryCount = 3,
-  handleHttpErrors,
+  handleHttpErrors = httpErrorHandler,
   setErrors,
   delay = 2000,
-}) {
+}: FetchWithRetryProps) {
   let response;
   try {
+    let data: FetchData;
     response = await fetch(url, options);
-    let data = response;
+    data = response;
     let errors;
     if (response.ok) {
       const contentType = response.headers.get("content-type");
@@ -54,6 +70,7 @@ async function fetchWithRetry({
       retryCount: retryCount - 1,
       handleHttpErrors,
       setErrors,
+      delay,
     });
   }
 }

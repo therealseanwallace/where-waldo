@@ -1,40 +1,35 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { NextFunction, RequestHandler, Request, Response } from 'express';
-import multer from 'multer';
-import DBService from './DBService';
-import Game from '../models/Game';
-import Character from '../models/Character';
+import { NextFunction, RequestHandler, Request, Response } from "express";
+import multer from "multer";
+import CloudStorageService from "./CloudStorageService";
+import CloudStorageMulterEngine from "./CloudStorageMulterEngine";
+import DBService from "./DBService";
+import Game from "../models/Game";
+import Character from "../models/Character";
 
 class AdminService {
   private static instance: AdminService;
 
   private dbService: DBService | undefined;
 
+  private CloudStorageMulterEngine: CloudStorageMulterEngine | undefined;
+
   private async init() {
     this.dbService = await DBService.getInstance();
-  };
+    this.CloudStorageMulterEngine = new CloudStorageMulterEngine();
+  }
 
   private constructor() {
     this.init();
   }
 
-  private static imageStorage: multer.StorageEngine = multer.diskStorage({
-    destination: (req: Request, file: Express.Multer.File, cb) => cb(null, "public/images"),
-    filename: (req, file, cb) => {
-      cb(null, `${Date.now()}-${file.originalname}`)
-    },
-  });
+  private static imageUploader: RequestHandler = multer({
+    storage: new CloudStorageMulterEngine(),
+  }).single("image");
 
-  private static thumbnailStorage: multer.StorageEngine = multer.diskStorage({
-    destination: (req: Request, file: Express.Multer.File, cb) => cb(null, "public/thumbnails"),
-    filename: (req, file, cb) => {
-      cb(null, `${Date.now()}-${file.originalname}`)
-    },
-  });
-
-  private static imageUploader: RequestHandler = multer({ storage: AdminService.imageStorage }).single('image');
-
-  private static thumbnailUploader: RequestHandler = multer({ storage: AdminService.thumbnailStorage }).single('thumbnail');
+  private static thumbnailUploader: RequestHandler = multer({
+    storage: new CloudStorageMulterEngine(),
+  }).single("thumbnail");
 
   public static getInstance(): AdminService {
     if (!AdminService.instance) {
@@ -48,7 +43,9 @@ class AdminService {
       AdminService.imageUploader(req, res, async (err: unknown) => {
         if (err) {
           console.error("Error occurred while uploading image:", err);
-          return res.status(422).send("An error occurred while uploading the image.");
+          return res
+            .status(422)
+            .send("An error occurred while uploading the image.");
         }
         // File uploaded successfully.
         const { name, slug } = req.body;
@@ -62,7 +59,7 @@ class AdminService {
           slug,
           path: req.file?.path,
           highScores,
-        })
+        });
 
         try {
           await this.dbService!.createOrUpdateModel({
@@ -70,14 +67,15 @@ class AdminService {
             data: game,
           });
 
-          res.json({ message: `Game ${name} uploaded successfully! Slug: ${slug}.` })
-
+          res.json({
+            message: `Game ${name} uploaded successfully! Slug: ${slug}.`,
+          });
         } catch (error) {
           console.error("Error occurred while uploading game:", error);
           res.status(500).send("An error occurred while uploading the game.");
         }
       });
-    }
+    };
   }
 
   public uploadChar() {
@@ -85,7 +83,9 @@ class AdminService {
       AdminService.thumbnailUploader(req, res, async (err: unknown) => {
         if (err) {
           console.error("Error occurred while uploading thumbnail:", err);
-          return res.status(422).send("An error occurred while uploading the thumbnail.");
+          return res
+            .status(422)
+            .send("An error occurred while uploading the thumbnail.");
         }
 
         // File upload is successful. Add the character's data to the database.
@@ -113,12 +113,13 @@ class AdminService {
           res.json({ message: `Character ${name} uploaded successfully!` });
         } catch (error) {
           console.error("Error occurred while uploading character:", error);
-          res.status(500).send("An error occurred while uploading the character.");
+          res
+            .status(500)
+            .send("An error occurred while uploading the character.");
         }
-        
       });
     };
-  };
+  }
 }
 
 export default AdminService;

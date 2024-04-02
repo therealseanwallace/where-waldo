@@ -11,7 +11,7 @@ const path_1 = __importDefault(require("path"));
 const cors_1 = __importDefault(require("cors"));
 const helmet_1 = __importDefault(require("helmet"));
 const CustomError_1 = __importDefault(require("./utils/CustomError"));
-const adminRouter_1 = __importDefault(require("./routes/adminRouter"));
+const gameRouter_1 = __importDefault(require("./routes/gameRouter"));
 dotenv_1.default.config();
 process.on("unhandledRejection", (reason, promise) => {
     const reasonAsSystemError = reason;
@@ -77,7 +77,7 @@ async function startServer() {
         app.get("/", (req, res) => {
             res.send("Welcome to Express");
         });
-        app.use("/admin", adminRouter_1.default);
+        app.use("/admin", gameRouter_1.default);
         app.use((err, req, res, next) => {
             // Log the error details
             console.error(`Status: ${err.status || 500}, Message: ${err.message}, Stack: ${err.stack}`);
